@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tienda Demo | POLAGODD</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-dark: #09090b;
+            --primary: #6366f1; /* Indigo */
+            --accent: #a855f7; /* Purple */
+            --gold: #fbbf24;
+            --danger: #f43f5e;
+            --success: #10b981;
+            --card-glass: rgba(255, 255, 255, 0.03);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --sidebar-bg: rgba(9, 9, 11, 0.95);
+            --text-main: #ffffff;
+            --text-muted: #9ca3af;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex; flex-direction: column;
+        }
+
+        /* --- FONDO ANIMADO --- */
+        .bg-grid {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: 
+                linear-gradient(to right, rgba(255,255,255,0.02) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 40px 40px;
+            z-index: -2;
+            mask-image: radial-gradient(circle at center, black 40%, transparent 100%);
+        }
+
+        .glow-spot {
+            position: fixed; width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.15), transparent 70%);
+            top: -200px; left: 50%; transform: translateX(-50%);
+            z-index: -1; pointer-events: none;
+        }
+
+        /* --- NAVBAR --- */
+        nav {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px 5%; backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-glass);
+            position: sticky; top: 0; z-index: 100; background: rgba(9, 9, 11, 0.8);
+        }
+
+        .nav-left { display: flex; align-items: center; gap: 20px; }
+        .menu-toggle { font-size: 1.5rem; cursor: pointer; color: var(--text-muted); transition: 0.3s; }
+        .menu-toggle:hover { color: var(--accent); }
+
+        .brand { 
+            font-size: 1.5rem; font-weight: 800; letter-spacing: 1px; 
+            display: flex; align-items: center; gap: 10px; 
+            text-decoration: none; color: white; transition: 0.3s;
+        }
+        .brand:hover { transform: scale(1.02); }
+        .brand i { color: var(--accent); }
+        
+        .cart-btn {
+            background: var(--card-glass); border: 1px solid var(--border-glass);
+            padding: 10px 20px; border-radius: 30px; cursor: pointer;
+            display: flex; align-items: center; gap: 10px; transition: 0.3s;
+        }
+        .cart-btn:hover { background: var(--primary); border-color: var(--primary); }
+        .cart-count { background: var(--danger); font-size: 0.8rem; padding: 2px 8px; border-radius: 10px; font-weight: bold; }
+
+        /* --- SIDEBAR ELEGANTE --- */
+        .sidebar {
+            position: fixed; top: 0; left: -300px; width: 300px; height: 100%;
+            background: var(--sidebar-bg); backdrop-filter: blur(15px);
+            border-right: 1px solid var(--border-glass); z-index: 200;
+            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); padding: 30px;
+            display: flex; flex-direction: column; gap: 20px;
+        }
+        .sidebar.active { left: 0; }
+
+        .sidebar-header { font-size: 1.5rem; font-weight: bold; margin-bottom: 30px; color: var(--accent); }
+        .sidebar-link {
+            text-decoration: none; color: var(--text-muted); font-size: 1.1rem;
+            padding: 15px; border-radius: 10px; transition: 0.3s; display: flex; align-items: center; gap: 15px;
+        }
+        .sidebar-link:hover { background: var(--card-glass); color: white; padding-left: 20px; }
+        .sidebar-link i { width: 25px; color: var(--primary); }
+
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); z-index: 150;
+            opacity: 0; pointer-events: none; transition: 0.3s;
+        }
+        .overlay.active { opacity: 1; pointer-events: all; }
+
+        /* --- HERO & CONTENT (Flex grow para empujar footer) --- */
+        .main-content { flex: 1; }
+
+        .hero {
+            text-align: center; padding: 80px 20px;
+        }
+        .hero h1 {
+            font-size: 4rem; margin-bottom: 20px;
+            background: linear-gradient(to right, #fff, var(--primary), var(--accent));
+            -webkit-background-clip: text; background-clip: text; color: transparent;
+        }
+        .hero p { color: var(--text-muted); font-size: 1.2rem; max-width: 600px; margin: 0 auto 40px; }
+
+        /* --- CATEGORÍAS & GRID (Igual al anterior) --- */
+        .categories { display: flex; justify-content: center; gap: 15px; margin-bottom: 60px; flex-wrap: wrap; }
+        .cat-btn {
+            background: transparent; border: 1px solid var(--border-glass);
+            color: var(--text-muted); padding: 12px 30px; border-radius: 12px;
+            cursor: pointer; transition: 0.3s; font-weight: 600;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .cat-btn.active, .cat-btn:hover {
+            background: var(--primary); color: white; border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.4); transform: translateY(-2px);
+        }
+        .store-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px; max-width: 1200px; margin: 0 auto; padding: 0 20px 100px;
+        }
+        .product-card {
+            background: var(--card-glass); border: 1px solid var(--border-glass);
+            border-radius: 20px; padding: 30px; position: relative; overflow: hidden;
+            transition: transform 0.1s; transform-style: preserve-3d;
+        }
+        .product-card::before {
+            content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+            transition: 0.5s;
+        }
+        .product-card:hover::before { left: 100%; }
+        .rank-badge {
+            width: 80px; height: 80px; margin: 0 auto 20px; display: flex; align-items: center;
+            justify-content: center; font-size: 2.5rem; border-radius: 50%; box-shadow: 0 0 30px rgba(0,0,0,0.5);
+        }
+        .rank-vip { background: linear-gradient(135deg, #10b981, #059669); color: #fff; }
+        .rank-mvp { background: linear-gradient(135deg, #3b82f6, #2563eb); color: #fff; }
+        .rank-ultra { background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; box-shadow: 0 0 30px rgba(245, 158, 11, 0.4); }
+        .card-title { font-size: 1.8rem; font-weight: bold; margin-bottom: 10px; text-align: center; }
+        .card-price { 
+            font-size: 2rem; font-weight: 800; color: var(--gold); 
+            text-align: center; margin-bottom: 20px; text-shadow: 0 0 10px rgba(251, 191, 36, 0.3);
+        }
+        .perks-list { list-style: none; margin-bottom: 25px; }
+        .perks-list li { 
+            padding: 8px 0; border-bottom: 1px solid var(--border-glass); 
+            color: var(--text-muted); font-size: 0.9rem; display: flex; align-items: center; gap: 10px;
+        }
+        .perks-list li i { color: var(--success); }
+        .buy-btn {
+            width: 100%; padding: 15px; border: none; border-radius: 12px;
+            background: white; color: black; font-weight: 800; text-transform: uppercase;
+            cursor: pointer; transition: 0.3s; font-size: 1rem;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .buy-btn:hover { transform: scale(1.05); background: var(--primary); color: white; }
+
+        /* --- FOOTER PROFESIONAL --- */
+        footer {
+            background: rgba(9, 9, 11, 0.95);
+            border-top: 1px solid var(--border-glass);
+            padding: 60px 20px;
+            margin-top: auto; /* Empuja al fondo */
+        }
+        .footer-grid {
+            max-width: 1200px; margin: 0 auto;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 40px;
+        }
+        .footer-col h4 { font-size: 1.2rem; margin-bottom: 20px; color: white; }
+        .footer-col p, .footer-col a { color: var(--text-muted); text-decoration: none; font-size: 0.95rem; line-height: 1.8; transition: 0.3s; display: block;}
+        .footer-col a:hover { color: var(--accent); padding-left: 5px; }
+        .footer-bottom {
+            text-align: center; margin-top: 40px; padding-top: 20px;
+            border-top: 1px solid var(--border-glass); color: var(--text-muted); font-size: 0.85rem;
+        }
+
+        /* --- MODAL CHECKOUT --- */
+        .checkout-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(15px);
+            display: none; align-items: center; justify-content: center; z-index: 300;
+        }
+        .checkout-content {
+            background: var(--sidebar-bg); width: 90%; max-width: 500px;
+            padding: 40px; border-radius: 25px; border: 1px solid var(--accent);
+            text-align: center; position: relative;
+            box-shadow: 0 0 50px rgba(88, 101, 242, 0.3);
+        }
+        .close-checkout { position: absolute; top: 20px; right: 25px; font-size: 1.5rem; cursor: pointer; }
+        .checkout-summ { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; margin: 20px 0; }
+        .pay-methods { display: flex; gap: 10px; justify-content: center; margin-top: 20px; }
+        .pay-icon { font-size: 2rem; color: var(--text-muted); transition: 0.3s; cursor: pointer; }
+        .pay-icon:hover { color: var(--accent); transform: scale(1.1); }
+
+        /* --- UTILIDADES & RESPONSIVE --- */
+        .hidden { display: none; }
+        @media (max-width: 768px) { .hero h1 { font-size: 2.5rem; } .footer-grid { grid-template-columns: 1fr; text-align: center; } }
+    </style>
+</head>
+<body>
+
+    <div class="bg-grid"></div>
+    <div class="glow-spot"></div>
+    <div class="overlay" onclick="toggleSidebar()"></div>
+
+    <nav>
+        <div class="nav-left">
+            <i class="fas fa-bars menu-toggle" onclick="toggleSidebar()"></i>
+            <a href="#" class="brand" onclick="location.reload()">
+                <i class="fas fa-bolt"></i> POLAGODD <span style="font-size: 0.8rem; color: var(--text-muted);">STORE DEMO</span>
+            </a>
+        </div>
+        <div class="cart-btn" onclick="openCheckout()">
+            <i class="fas fa-shopping-cart"></i>
+            <span id="cart-total">$0.00</span>
+            <span class="cart-count">0</span>
+        </div>
+    </nav>
+
+    <div class="sidebar">
+        <div class="sidebar-header">Navegación</div>
+        <a href="#" class="sidebar-link"><i class="fas fa-home"></i> Inicio</a>
+        <a href="#" class="sidebar-link"><i class="fas fa-tags"></i> Rangos & Items</a>
+        <a href="#" class="sidebar-link"><i class="fas fa-server"></i> Servidores</a>
+        <a href="#" class="sidebar-link"><i class="fas fa-headset"></i> Soporte</a>
+    </div>
+
+    <div class="main-content">
+        <section class="hero">
+            <h1>Potencia tu Juego</h1>
+            <p>Ejemplo de tienda premium. Esta plataforma demuestra la calidad de desarrollo que ofrezco a mis clientes.</p>
+            
+            <div class="categories">
+                <button class="cat-btn active" onclick="filter('ranks', this)"><i class="fas fa-crown"></i> Rangos</button>
+                <button class="cat-btn" onclick="filter('keys', this)"><i class="fas fa-key"></i> Llaves</button>
+                <button class="cat-btn" onclick="filter('bundles', this)"><i class="fas fa-box-open"></i> Bundles</button>
+            </div>
+        </section>
+
+        <section class="store-grid">
+            <div class="product-card item-ranks" data-tilt>
+                <div class="rank-badge rank-mvp"><i class="fas fa-shield-alt"></i></div>
+                <div class="card-title">MVP Rank</div>
+                <div class="card-price">$15.00</div>
+                <ul class="perks-list">
+                    <li><i class="fas fa-check"></i> Prefijo [MVP]</li>
+                    <li><i class="fas fa-check"></i> Fly en Lobbies</li>
+                    <li><i class="fas fa-check"></i> Kits exclusivos</li>
+                </ul>
+                <button class="buy-btn" onclick="addToCart(15.00)"><i class="fas fa-cart-plus"></i> Añadir</button>
+            </div>
+
+            <div class="product-card item-ranks" data-tilt>
+                <div class="rank-badge rank-ultra"><i class="fas fa-dragon"></i></div>
+                <div class="card-title">ULTRA Rank</div>
+                <div class="card-price">$30.00</div>
+                <ul class="perks-list">
+                    <li><i class="fas fa-check"></i> Todos los beneficios</li>
+                    <li><i class="fas fa-check"></i> Chat Color</li>
+                    <li><i class="fas fa-check"></i> Acceso Beta</li>
+                </ul>
+                <button class="buy-btn" onclick="addToCart(30.00)"><i class="fas fa-cart-plus"></i> Añadir</button>
+            </div>
+
+            <div class="product-card item-keys hidden" data-tilt>
+                <div class="rank-badge" style="background: #e11d48; color: white;"><i class="fas fa-key"></i></div>
+                <div class="card-title">Mítica Key x3</div>
+                <div class="card-price">$5.99</div>
+                <button class="buy-btn" onclick="addToCart(5.99)"><i class="fas fa-cart-plus"></i> Añadir</button>
+            </div>
+        </section>
+    </div>
+
+    <footer>
+        <div class="footer-grid">
+            <div class="footer-col">
+                <h4><i class="fas fa-bolt" style="color: var(--accent);"></i> POLAGODD</h4>
+                <p>Desarrollo web de alto rendimiento y soluciones para servidores de juegos. Esta tienda es una demostración de capacidades técnicas.</p>
+            </div>
+            <div class="footer-col">
+                <h4>Enlaces Rápidos</h4>
+                <a href="#">Preguntas Frecuentes (FAQ)</a>
+                <a href="#">Términos y Condiciones</a>
+                <a href="#">Política de Privacidad</a>
+                <a href="#">Estado de los Servicios</a>
+            </div>
+            <div class="footer-col">
+                <h4>Contáctanos</h4>
+                <p><i class="fab fa-discord"></i> Discord: polagodd</p>
+                <p><i class="fas fa-envelope"></i> Email: contacto@demo.com</p>
+                <p><i class="fas fa-map-marker-alt"></i> Server: Buenos Aires, AR</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            &copy; 2026 Polagodd Development. Todos los derechos reservados.
+        </div>
+    </footer>
+
+    <div class="checkout-modal" id="checkout-modal">
+        <div class="checkout-content">
+            <span class="close-checkout" onclick="closeCheckout()">&times;</span>
+            <i class="fas fa-shopping-cart" style="font-size: 3rem; color: var(--primary); margin-bottom: 20px;"></i>
+            <h2>Resumen del Pedido</h2>
+            <p style="color: var(--text-muted);">Estás a un paso de completar tu compra demo.</p>
+            
+            <div class="checkout-summ">
+                <p>Items en carrito: <b id="summ-count">0</b></p>
+                <h3 style="margin-top: 10px;">Total a Pagar: <span style="color: var(--gold);" id="summ-total">$0.00</span></h3>
+            </div>
+
+            <p style="font-size: 0.9rem;">Selecciona un método de pago (Simulación):</p>
+            <div class="pay-methods">
+                <i class="fab fa-paypal pay-icon" title="PayPal"></i>
+                <i class="fab fa-bitcoin pay-icon" title="Crypto"></i>
+                <i class="fas fa-credit-card pay-icon" title="Tarjeta"></i>
+            </div>
+            
+            <button class="buy-btn" style="margin-top: 25px; background: var(--success); color: white;" onclick="alert('¡Gracias por probar la demo! Esta es una simulación de pago.')">
+                <i class="fas fa-lock"></i> Pagar Ahora (Demo)
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- SIDEBAR TOGGLE ---
+        function toggleSidebar() {
+            document.querySelector('.sidebar').classList.toggle('active');
+            document.querySelector('.overlay').classList.toggle('active');
+        }
+
+        // --- CARRITO SIMPLE & MODAL CHECKOUT ---
+        let total = 0;
+        let count = 0;
+
+        function addToCart(price) {
+            total += price; count++;
+            updateCartDisplay();
+            
+            // Animación del botón
+            const btn = document.querySelector('.cart-btn');
+            btn.style.transform = "scale(1.1)";
+            setTimeout(() => btn.style.transform = "scale(1)", 200);
+        }
+
+        function updateCartDisplay() {
+            document.getElementById('cart-total').innerText = '$' + total.toFixed(2);
+            document.querySelector('.cart-count').innerText = count;
+        }
+
+        function openCheckout() {
+            if(count === 0) {
+                alert("El carrito está vacío. Añade algún item de ejemplo.");
+                return;
+            }
+            document.getElementById('summ-count').innerText = count;
+            document.getElementById('summ-total').innerText = '$' + total.toFixed(2);
+            document.getElementById('checkout-modal').style.display = 'flex';
+        }
+
+        function closeCheckout() {
+            document.getElementById('checkout-modal').style.display = 'none';
+        }
+
+        // Cerrar modal al hacer click fuera
+        window.onclick = function(event) {
+            const modal = document.getElementById('checkout-modal');
+            if (event.target === modal) { closeCheckout(); }
+        }
+
+        // --- FILTROS (Igual al anterior) ---
+        function filter(category, btn) {
+            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.querySelectorAll('.product-card').forEach(item => {
+                if(category === 'bundles') { item.classList.add('hidden'); } 
+                else if(item.classList.contains('item-' + category)) {
+                    item.classList.remove('hidden');
+                    item.style.animation = "fadeIn 0.5s ease";
+                } else { item.classList.add('hidden'); }
+            });
+        }
+
+        // --- EFECTO TILT 3D ---
+        document.querySelectorAll('.product-card').forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left; const y = e.clientY - rect.top;
+                const centerX = rect.width / 2; const centerY = rect.height / 2;
+                const rotateX = ((y - centerY) / centerY) * -5;
+                const rotateY = ((x - centerX) / centerX) * 5;
+                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02)`;
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale(1)';
+            });
+        });
+    </script>
+</body>
+</html>
